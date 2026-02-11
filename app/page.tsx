@@ -1,5 +1,13 @@
+import { Suspense } from "react";
 import Image from "next/image";
-import RegisterForm from "@/components/RegisterForm"; // Maan letay hain aapne components folder mein rkha hai
+import RegisterForm from "@/components/RegisterForm";
+
+// Next.js 16 naya standard: themeColor ko viewport mein rakhein
+export const viewport = {
+  themeColor: "#022c22",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export default function Home() {
   return (
@@ -10,12 +18,12 @@ export default function Home() {
         <div className="mb-10 flex flex-col items-center gap-4">
           <div className="relative h-20 w-20 overflow-hidden rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 p-1 shadow-lg shadow-amber-500/20">
              <div className="flex h-full w-full items-center justify-center rounded-xl bg-[#022c22]">
-                <span className="text-3xl font-bold text-amber-400 text-shadow">PP</span>
+                <span className="text-3xl font-bold text-amber-400">PP</span>
              </div>
           </div>
           <div className="text-center">
             <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
-              Pak <span className="text-amber-400">Poultry</span> Bussiness
+              Pak <span className="text-amber-400">Poultry</span> Business
             </h1>
             <p className="text-sm text-emerald-200/60 uppercase tracking-widest mt-1">
               Investment & Growth
@@ -23,9 +31,16 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Registration Form Component */}
+        {/* Registration Form Component wrapped in Suspense */}
         <div className="w-full">
-          <RegisterForm />
+          <Suspense fallback={
+            <div className="flex items-center justify-center p-10 text-amber-400">
+              <div className="h-8 w-8 animate-spin rounded-full border-4 border-amber-400 border-t-transparent"></div>
+              <span className="ml-3">Loading Form...</span>
+            </div>
+          }>
+            <RegisterForm />
+          </Suspense>
         </div>
 
         {/* Footer info */}
