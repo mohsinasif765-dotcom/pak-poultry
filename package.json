@@ -12,6 +12,7 @@
     "@ducanh2912/next-pwa": "^10.2.9",
     "@supabase/ssr": "^0.5.2",
     "@supabase/supabase-js": "^2.48.1",
+    "@tailwindcss/postcss": "^4.1.18",
     "firebase": "^11.3.1",
     "framer-motion": "^12.4.3",
     "lucide-react": "^0.475.0",
