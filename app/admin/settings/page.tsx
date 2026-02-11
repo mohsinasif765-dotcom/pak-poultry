@@ -4,19 +4,16 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { 
-  Settings, 
   Save, 
   TrendingUp, 
   ShoppingBag, 
   Phone, 
   Loader2, 
   CheckCircle2,
-  ArrowLeft,
-  Egg
+  ArrowLeft
 } from 'lucide-react'
 import Link from 'next/link'
 
-// TypeScript interface for PriceInput props
 interface PriceInputProps {
   label: string;
   value: number;
@@ -29,14 +26,13 @@ export default function AdminSettings() {
   const [updating, setUpdating] = useState(false)
   const [success, setSuccess] = useState(false)
 
-  // Form State
   const [rates, setRates] = useState({
-    selling_rate: 30, // User sells to admin
-    p1_price: 500,    // Starter
-    p2_price: 2500,   // Bronze
-    p3_price: 5000,   // Golden
-    p4_price: 25000,  // Diamond
-    jazzcash: '',
+    selling_rate: 30,
+    p1_price: 500,
+    p2_price: 2500,
+    p3_price: 5000,
+    p4_price: 25000,
+    Ubank: '',
     easypaisa: ''
   })
 
@@ -48,7 +44,7 @@ export default function AdminSettings() {
       if (settings && pkgs) {
         setRates({
           selling_rate: settings.egg_rate_pkr,
-          jazzcash: settings.jazzcash_number || '',
+          Ubank: settings.Ubank_number || '',
           easypaisa: settings.easypaisa_number || '',
           p1_price: pkgs.find((p: any) => p.name === 'Starter Hen')?.price || 500,
           p2_price: pkgs.find((p: any) => p.name === 'Bronze Flock')?.price || 2500,
@@ -62,23 +58,28 @@ export default function AdminSettings() {
   }, [])
 
   const handleUpdate = async () => {
-    setUpdating(true)
-    const { error } = await supabase.rpc('update_admin_rates', {
-      new_selling_rate: rates.selling_rate,
-      p1_price: rates.p1_price,
-      p2_price: rates.p2_price,
-      p3_price: rates.p3_price,
-      p4_price: rates.p4_price,
-      new_jazzcash: rates.jazzcash,
-      new_easypaisa: rates.easypaisa
-    })
+  setUpdating(true)
+  
+  // ORDER MATTERS: Jis tarteeb mein SQL mein hain, usi mein bhejain
+  const { error } = await supabase.rpc('update_admin_rates', {
+    s_rate: Number(rates.selling_rate),
+    p1: Number(rates.p1_price),
+    p2: Number(rates.p2_price),
+    p3: Number(rates.p3_price),
+    p4: Number(rates.p4_price),
+    u_no: String(rates.Ubank),
+    e_no: String(rates.easypaisa)
+  })
 
-    if (!error) {
-      setSuccess(true)
-      setTimeout(() => setSuccess(false), 3000)
-    }
-    setUpdating(false)
+  if (error) {
+    console.error("RPC Error:", error)
+    alert("Error: " + error.message)
+  } else {
+    setSuccess(true)
+    setTimeout(() => setSuccess(false), 3000)
   }
+  setUpdating(false)
+}
 
   if (loading) return (
     <div className="h-screen flex items-center justify-center text-amber-400 bg-[#022c22]">
@@ -88,8 +89,6 @@ export default function AdminSettings() {
 
   return (
     <div className="min-h-screen bg-[#022c22] text-white pb-32 pt-6 px-4">
-      
-      {/* --- HEADER --- */}
       <div className="flex items-center gap-4 mb-8">
         <Link href="/admin" className="p-2 bg-white/5 rounded-full border border-white/10">
           <ArrowLeft size={20} />
@@ -101,8 +100,6 @@ export default function AdminSettings() {
       </div>
 
       <div className="space-y-6">
-        
-        {/* --- SECTION 1: MARKET RATES --- */}
         <div className="shiny-card p-6 rounded-3xl bg-white/5 border border-white/10 shadow-2xl">
           <div className="flex items-center gap-2 mb-4 text-amber-400">
             <TrendingUp size={18} />
@@ -119,21 +116,19 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* --- SECTION 2: HEN PACKAGE PRICES --- */}
         <div className="shiny-card p-6 rounded-3xl bg-white/5 border border-white/10 shadow-xl">
           <div className="flex items-center gap-2 mb-4 text-blue-400">
             <ShoppingBag size={18} />
-            <h3 className="font-bold text-sm uppercase tracking-tight">Hen Buying Prices (Cards)</h3>
+            <h3 className="font-bold text-sm uppercase tracking-tight">Hen Buying Prices</h3>
           </div>
           <div className="space-y-4">
-            <PriceInput label="Starter Hen (1 Hen)" value={rates.p1_price} onChange={(val: number) => setRates({...rates, p1_price: val})} />
-            <PriceInput label="Bronze Flock (5 Hens)" value={rates.p2_price} onChange={(val: number) => setRates({...rates, p2_price: val})} />
-            <PriceInput label="Golden Layer (10 Hens)" value={rates.p3_price} onChange={(val: number) => setRates({...rates, p3_price: val})} />
-            <PriceInput label="Diamond Farm (50 Hens)" value={rates.p4_price} onChange={(val: number) => setRates({...rates, p4_price: val})} />
+            <PriceInput label="Starter Hen" value={rates.p1_price} onChange={(val) => setRates({...rates, p1_price: val})} />
+            <PriceInput label="Bronze Flock" value={rates.p2_price} onChange={(val) => setRates({...rates, p2_price: val})} />
+            <PriceInput label="Golden Layer" value={rates.p3_price} onChange={(val) => setRates({...rates, p3_price: val})} />
+            <PriceInput label="Diamond Farm" value={rates.p4_price} onChange={(val) => setRates({...rates, p4_price: val})} />
           </div>
         </div>
 
-        {/* --- SECTION 3: PAYMENT NUMBERS --- */}
         <div className="shiny-card p-6 rounded-3xl bg-white/5 border border-white/10 shadow-xl">
           <div className="flex items-center gap-2 mb-4 text-purple-400">
             <Phone size={18} />
@@ -141,11 +136,11 @@ export default function AdminSettings() {
           </div>
           <div className="space-y-4">
             <div>
-              <label className="text-[10px] text-white/40 uppercase font-bold">JazzCash Number</label>
+              <label className="text-[10px] text-white/40 uppercase font-bold">Ubank Number</label>
               <input 
                 type="text"
-                value={rates.jazzcash}
-                onChange={(e) => setRates({...rates, jazzcash: e.target.value})}
+                value={rates.Ubank}
+                onChange={(e) => setRates({...rates, Ubank: e.target.value})}
                 className="w-full bg-black/40 border border-white/10 rounded-xl p-3 mt-1 text-sm font-bold text-white outline-none focus:border-purple-500/50 transition-all"
               />
             </div>
@@ -161,7 +156,6 @@ export default function AdminSettings() {
           </div>
         </div>
 
-        {/* --- SAVE BUTTON --- */}
         <motion.button
           whileTap={{ scale: 0.95 }}
           onClick={handleUpdate}
@@ -171,7 +165,6 @@ export default function AdminSettings() {
         >
           {updating ? <Loader2 className="animate-spin" size={20} /> : success ? <><CheckCircle2 size={20} /> Updated Successfully</> : <><Save size={20} /> Save Settings</>}
         </motion.button>
-
       </div>
     </div>
   )

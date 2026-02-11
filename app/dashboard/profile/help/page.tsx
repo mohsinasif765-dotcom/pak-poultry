@@ -10,12 +10,14 @@ import {
   Mail, 
   ChevronDown, 
   Clock,
-  HelpCircle
+  HelpCircle,
+  Users
 } from 'lucide-react'
 
 // Support Data
 const supportContact = {
-  whatsapp: "+923001234567", // Apna number yahan dalein
+  whatsapp: "923287007298", // Updated number without + for URL
+  communityLink: "https://chat.whatsapp.com/CpQeTa81D8P5KnTFkPTyLj",
   email: "support@pakpoultry.com",
   timing: "10:00 AM - 10:00 PM"
 }
@@ -50,6 +52,10 @@ export default function HelpPage() {
 
   const openWhatsApp = () => {
     window.open(`https://wa.me/${supportContact.whatsapp}?text=Hello! Mujhe Pak Poultry app mein help chahiye.`, '_blank')
+  }
+
+  const openCommunity = () => {
+    window.open(supportContact.communityLink, '_blank')
   }
 
   return (
@@ -96,24 +102,39 @@ export default function HelpPage() {
           </div>
           <div className="text-center">
             <p className="text-white font-bold text-sm">WhatsApp</p>
-            <p className="text-[10px] text-green-300">Fastest Reply</p>
+            <p className="text-[10px] text-green-300">Contact Admin</p>
           </div>
         </motion.button>
 
-        {/* Email Button */}
+        {/* Community Button */}
         <motion.button 
           whileTap={{ scale: 0.95 }}
-          className="shiny-card bg-white/5 border-white/10 p-4 rounded-2xl flex flex-col items-center gap-3 group hover:bg-white/10 transition-all"
+          onClick={openCommunity}
+          className="shiny-card bg-amber-600/20 border-amber-500/30 p-4 rounded-2xl flex flex-col items-center gap-3 group hover:bg-amber-600/30 transition-all"
         >
-          <div className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
-            <Mail className="text-white w-6 h-6" />
+          <div className="w-12 h-12 rounded-full bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:scale-110 transition-transform">
+            <Users className="text-white w-6 h-6" />
           </div>
           <div className="text-center">
-            <p className="text-white font-bold text-sm">Email Us</p>
-            <p className="text-[10px] text-white/40">Within 24 Hours</p>
+            <p className="text-white font-bold text-sm">Community</p>
+            <p className="text-[10px] text-amber-300">Join Group</p>
           </div>
         </motion.button>
       </div>
+
+      {/* --- EMAIL SUPPORT (FULL WIDTH) --- */}
+      <motion.button 
+        whileTap={{ scale: 0.98 }}
+        className="w-full bg-white/5 border border-white/10 p-4 rounded-2xl flex items-center gap-4 group hover:bg-white/10 transition-all"
+      >
+        <div className="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center border border-white/10">
+          <Mail className="text-white w-5 h-5" />
+        </div>
+        <div className="text-left">
+          <p className="text-white font-bold text-sm">Email Us</p>
+          <p className="text-[10px] text-white/40">{supportContact.email}</p>
+        </div>
+      </motion.button>
 
       {/* --- FAQ SECTION --- */}
       <div className="pt-4">

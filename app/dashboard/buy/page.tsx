@@ -18,7 +18,7 @@ export default function BuyPage() {
 
   // Interaction States
   const [selectedPkg, setSelectedPkg] = useState<any>(null)
-  const [method, setMethod] = useState<'JazzCash' | 'EasyPaisa' | null>(null)
+  const [method, setMethod] = useState<'Ubank' | 'EasyPaisa' | null>(null)
   const [trxId, setTrxId] = useState('')
   const [buying, setBuying] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -164,7 +164,7 @@ export default function BuyPage() {
 
                   {/* Method Selector & Copy Numbers */}
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setMethod('JazzCash')} className={`p-3 rounded-2xl border text-[10px] font-bold ${method === 'JazzCash' ? 'bg-red-600 border-red-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}>JazzCash</button>
+                    <button onClick={() => setMethod('Ubank')} className={`p-3 rounded-2xl border text-[10px] font-bold ${method === 'Ubank' ? 'bg-red-600 border-red-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}>Ubank</button>
                     <button onClick={() => setMethod('EasyPaisa')} className={`p-3 rounded-2xl border text-[10px] font-bold ${method === 'EasyPaisa' ? 'bg-green-600 border-green-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}>EasyPaisa</button>
                   </div>
 
@@ -172,9 +172,9 @@ export default function BuyPage() {
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white/5 p-4 rounded-2xl border border-white/10 flex justify-between items-center">
                       <div>
                         <p className="text-[10px] text-white/40 uppercase">{method} Number</p>
-                        <p className="text-lg font-bold text-white font-mono">{method === 'JazzCash' ? adminInfo.jazzcash : adminInfo.easypaisa}</p>
+                        <p className="text-lg font-bold text-white font-mono">{method === 'Ubank' ? adminInfo.ubank : adminInfo.easypaisa}</p>
                       </div>
-                      <button onClick={() => handleCopy(method === 'JazzCash' ? adminInfo.jazzcash : adminInfo.easypaisa)} className="p-2 bg-emerald-500 rounded-lg text-emerald-950">
+                      <button onClick={() => handleCopy(method === 'Ubank' ? adminInfo.Ubank : adminInfo.easypaisa)} className="p-2 bg-emerald-500 rounded-lg text-emerald-950">
                         {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                       </button>
                     </motion.div>
