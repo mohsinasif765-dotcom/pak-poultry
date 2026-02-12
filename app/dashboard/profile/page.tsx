@@ -166,7 +166,7 @@ export default function ProfilePage() {
             <ActionItem 
               icon={Headphones} 
               label="Help & Support" 
-              onClick={() => router.push('/dashboard/help')}
+              onClick={() => router.push('/dashboard/profile/help')}
             />
           </div>
         </div>
