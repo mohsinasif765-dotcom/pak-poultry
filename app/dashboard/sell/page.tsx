@@ -45,24 +45,24 @@ export default function SellPage() {
     if (!quantity || isOverLimit || !walletName || !walletNumber) return
     setProcessing(true)
     
-    const { data: { user } } = await supabase.auth.getUser()
-
-    // Request database mein insert karna
-    const { error } = await supabase.from('sell_requests').insert({
-      user_id: user?.id,
-      buyer_name: selectedBuyer.name,
-      quantity: parseInt(quantity),
-      rate: selectedBuyer.rate,
-      total_amount: parseFloat(totalAmount as string),
-      wallet_name: walletName,
-      wallet_number: walletNumber,
-      method: walletMethod,
-      status: 'pending'
+    // Naya Secure RPC Call
+    const { error } = await supabase.rpc('submit_sell_request', {
+      p_quantity: parseInt(quantity),
+      p_buyer_name: selectedBuyer.name,
+      p_rate: selectedBuyer.rate,
+      p_total_amount: parseFloat(totalAmount as string),
+      p_wallet_name: walletName,
+      p_wallet_number: walletNumber,
+      p_method: walletMethod
     })
 
     if (!error) {
       setProcessing(false)
       setSuccess(true)
+      
+      // Local state update kar den taake user ko balance kam nazar aaye
+      setMyEggs(prev => prev - parseInt(quantity))
+
       setTimeout(() => {
         setSuccess(false)
         setSelectedBuyer(null)
@@ -71,7 +71,7 @@ export default function SellPage() {
         setWalletNumber('')
       }, 2500)
     } else {
-      alert(error.message)
+      alert("Error: " + error.message)
       setProcessing(false)
     }
   }

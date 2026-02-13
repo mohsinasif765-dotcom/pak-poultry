@@ -35,19 +35,23 @@ export default function AdminWithdrawals() {
   }, [activeTab])
 
   const handleAction = async (id: number, newStatus: 'approved' | 'rejected') => {
+    if (!confirm(`Are you sure you want to ${newStatus} this request?`)) return;
+
     setProcessingId(id)
     
-    // Status update logic
-    const { error } = await supabase
-      .from('sell_requests')
-      .update({ status: newStatus })
-      .eq('id', id)
+    // Ab direct update nahi, balkay RPC call ho rahi hai
+    const { error } = await supabase.rpc('process_withdrawal_request', {
+        p_request_id: id,
+        p_new_status: newStatus
+    })
 
     if (!error) {
+      // List se foran remove kar dena
       setRequests(prev => prev.filter(r => r.id !== id))
     } else {
-      alert("Error: " + error.message)
+      alert("Error processing withdrawal: " + error.message)
     }
+    
     setProcessingId(null)
   }
 

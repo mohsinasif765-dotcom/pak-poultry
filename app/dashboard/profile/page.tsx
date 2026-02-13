@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { requestForToken } from '@/lib/firebase' // Firebase helper import kiya
+import { requestForToken } from '@/lib/firebase'
 import { 
   Phone, 
   Shield, 
@@ -20,7 +20,9 @@ import {
   Loader2,
   Fingerprint,
   Scale,
-  BellRing // Notification icon k liye
+  BellRing,
+  Download,
+  Smartphone // Naya icon card k liye
 } from 'lucide-react'
 
 export default function ProfilePage() {
@@ -31,14 +33,27 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<any>(null)
   const [fetching, setFetching] = useState(true)
 
+  // --- PWA INSTALL LOGIC ---
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBtn, setShowInstallBtn] = useState(false);
+
   useEffect(() => {
+    // 1. Install prompt event ko listen karna
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBtn(true);
+    });
+
+    // 2. Check karna agar app pehle se installed hai
+    if (window.matchMedia('(display-mode: standalone)').matches) {
+      setShowInstallBtn(false);
+    }
+
     async function getProfile() {
-      // 1. Current Auth User lena
       const { data: { user } } = await supabase.auth.getUser()
       
       if (user) {
-        // --- PUSH NOTIFICATION APPROVAL LOGIC ---
-        // Page load hote hi token maangna aur save karna
         const token = await requestForToken()
         if (token) {
           await supabase
@@ -47,7 +62,6 @@ export default function ProfilePage() {
             .eq('id', user.id)
         }
 
-        // 2. Profile aur unki highest active investment fetch karna
         const { data: profileData } = await supabase
           .from('profiles')
           .select('*')
@@ -60,7 +74,6 @@ export default function ProfilePage() {
           .eq('user_id', user.id)
           .eq('status', 'active')
 
-        // Diamond Investor Logic
         let level = 'Beginner'
         const packages = investments?.map(i => i.package_name) || []
         
@@ -79,6 +92,16 @@ export default function ProfilePage() {
     }
     getProfile()
   }, [])
+
+  const handleInstallApp = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false);
+    }
+    setDeferredPrompt(null);
+  };
 
   const handleCopyID = () => {
     if (!profile) return
@@ -135,6 +158,37 @@ export default function ProfilePage() {
         </button>
       </div>
 
+      {/* --- INSTALL APP CARD (NEW) --- */}
+      {showInstallBtn && (
+        <div className="px-2">
+            <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                onClick={handleInstallApp}
+                className="relative overflow-hidden p-6 rounded-[32px] bg-gradient-to-br from-amber-400 to-amber-600 text-emerald-950 cursor-pointer shadow-2xl shadow-amber-400/20 group"
+            >
+                <Smartphone className="absolute -right-4 -bottom-4 w-32 h-32 opacity-10 group-hover:scale-110 transition-transform" />
+                
+                <div className="relative z-10">
+                    <div className="flex items-center gap-3 mb-2">
+                        <div className="p-2 bg-emerald-950/10 rounded-lg">
+                            <Download size={20} />
+                        </div>
+                        <span className="font-black text-[10px] uppercase tracking-tighter opacity-70">App Installation</span>
+                    </div>
+                    <h3 className="text-xl font-black leading-tight mb-1">Install Pak Poultry App</h3>
+                    <p className="text-[11px] font-bold opacity-80 leading-relaxed max-w-[220px]">
+                        Get a smoother experience by adding the app to your home screen.
+                    </p>
+                </div>
+
+                <div className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-emerald-950 rounded-full text-amber-400 shadow-xl group-hover:translate-x-1 transition-transform">
+                    <Download size={20} />
+                </div>
+            </motion.div>
+        </div>
+      )}
+
       {/* --- INFO CARDS --- */}
       <div className="space-y-4 px-2">
         <div className="space-y-2">
@@ -162,6 +216,18 @@ export default function ProfilePage() {
               label="Transaction History" 
               onClick={() => router.push('/dashboard/history')}
             />
+            {/* NAYA INSTALL APP BUTTON (Already in code) */}
+            {showInstallBtn && (
+              <>
+                <div className="h-[1px] bg-white/5 mx-4" />
+                <ActionItem 
+                  icon={Download} 
+                  label="Install Pak Poultry App" 
+                  onClick={handleInstallApp}
+                  highlighted
+                />
+              </>
+            )}
             <div className="h-[1px] bg-white/5 mx-4" />
             <ActionItem 
               icon={Headphones} 
@@ -232,17 +298,17 @@ function ProfileItem({ icon: Icon, label, value, highlight = false }: any) {
   )
 }
 
-function ActionItem({ icon: Icon, label, onClick }: any) {
+function ActionItem({ icon: Icon, label, onClick, highlighted = false }: any) {
   return (
     <button 
       onClick={onClick}
-      className="w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors group"
+      className={`w-full flex items-center justify-between p-5 hover:bg-white/5 transition-colors group ${highlighted ? 'bg-amber-400/5' : ''}`}
     >
       <div className="flex items-center gap-4">
-        <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-amber-400/20 transition-colors border border-white/5">
-          <Icon size={18} className="text-white group-hover:text-amber-400 transition-colors" />
+        <div className={`w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center group-hover:bg-amber-400/20 transition-colors border border-white/5 ${highlighted ? 'border-amber-400/20' : ''}`}>
+          <Icon size={18} className={`${highlighted ? 'text-amber-400' : 'text-white'} group-hover:text-amber-400 transition-colors`} />
         </div>
-        <p className="text-sm font-bold text-white/80 group-hover:text-white transition-colors tracking-tight">{label}</p>
+        <p className={`text-sm font-bold ${highlighted ? 'text-amber-400' : 'text-white/80'} group-hover:text-white transition-colors tracking-tight`}>{label}</p>
       </div>
       <ChevronRight size={18} className="text-white/10 group-hover:text-amber-400 group-hover:translate-x-1 transition-all" />
     </button>

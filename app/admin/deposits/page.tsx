@@ -4,16 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { 
-  CheckCircle2, 
-  XCircle, 
-  Clock, 
-  Copy, 
-  ExternalLink, 
-  Loader2,
-  SearchX,
-  User,
-  Hash,
-  ArrowLeft
+  CheckCircle2, XCircle, Copy, Loader2, SearchX, Hash, ArrowLeft, Image as ImageIcon, X
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -23,8 +14,10 @@ export default function AdminDeposits() {
   const [requests, setRequests] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [processingId, setProcessingId] = useState<number | null>(null)
+  
+  // Image Modal State
+  const [selectedImage, setSelectedImage] = useState<string | null>(null)
 
-  // Data Fetch karne ka function
   const fetchRequests = async (status: string) => {
     setLoading(true)
     const { data } = await supabase.rpc('get_admin_deposit_requests', { req_status: status })
@@ -36,21 +29,22 @@ export default function AdminDeposits() {
     fetchRequests(activeTab)
   }, [activeTab])
 
-  // Approval/Rejection Logic
+  // Approval/Rejection Logic (Bina image delete kiye)
   const handleAction = async (id: number, newStatus: 'approved' | 'rejected') => {
-    setProcessingId(id)
+    if (!confirm(`Are you sure you want to ${newStatus} this request?`)) return;
     
-    // Status update karna (SQL trigger baki kaam khud kar dega)
-    const { error } = await supabase
-      .from('hen_purchase_requests')
-      .update({ status: newStatus })
-      .eq('id', id)
+    setProcessingId(id)
+
+    // Database mein sirf status update karna
+    const { error } = await supabase.rpc('process_deposit_request', {
+        p_request_id: id,
+        p_new_status: newStatus
+    })
 
     if (!error) {
-      // List se hata dena foran
       setRequests(prev => prev.filter(r => r.id !== id))
     } else {
-      alert("Error: " + error.message)
+      alert("Error processing request: " + error.message)
     }
     setProcessingId(null)
   }
@@ -58,7 +52,7 @@ export default function AdminDeposits() {
   return (
     <div className="min-h-screen bg-[#022c22] text-white pb-32 pt-6 px-4">
       
-      {/* --- HEADER --- */}
+      {/* HEADER */}
       <div className="flex items-center gap-4 mb-8">
         <Link href="/admin" className="p-2 bg-white/5 rounded-full border border-white/10">
           <ArrowLeft size={20} />
@@ -69,7 +63,7 @@ export default function AdminDeposits() {
         </div>
       </div>
 
-      {/* --- VIP TABS --- */}
+      {/* VIP TABS */}
       <div className="flex p-1 bg-black/40 rounded-2xl mb-6 border border-white/5">
         {['pending', 'approved', 'rejected'].map((tab) => (
           <button
@@ -83,7 +77,7 @@ export default function AdminDeposits() {
         ))}
       </div>
 
-      {/* --- REQUESTS LIST --- */}
+      {/* REQUESTS LIST */}
       <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-amber-400" /></div>
@@ -105,7 +99,7 @@ export default function AdminDeposits() {
                     </div>
                     <div>
                       <h4 className="font-bold text-white leading-tight">{req.package_name}</h4>
-                      <p className="text-[10px] text-white/40 font-mono">By {req.user_name}</p>
+                      <p className="text-[10px] text-white/40 font-mono">By {req.user_name} • {req.quantity} Hens</p>
                     </div>
                   </div>
                   <div className="text-right">
@@ -114,7 +108,7 @@ export default function AdminDeposits() {
                   </div>
                 </div>
 
-                {/* Payment Info Box */}
+                {/* Info Box */}
                 <div className="bg-black/40 rounded-2xl p-4 border border-white/5 space-y-3 mb-5">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2 text-white/40"><Hash size={12}/> <span className="text-[10px] font-bold uppercase">TRX ID</span></div>
@@ -129,9 +123,19 @@ export default function AdminDeposits() {
                     <div className="flex items-center gap-2 text-white/40"><CreditCardIcon size={12}/> <span className="text-[10px] font-bold uppercase">Method</span></div>
                     <span className="text-xs font-bold text-white">{req.method}</span>
                   </div>
+                  
+                  {/* Screenshot Button */}
+                  {req.screenshot_url && (
+                    <button 
+                      onClick={() => setSelectedImage(req.screenshot_url)}
+                      className="w-full flex items-center justify-center gap-2 mt-2 py-2 bg-white/5 border border-white/10 rounded-xl text-xs font-bold text-blue-400 hover:bg-blue-500/10 transition-colors"
+                    >
+                      <ImageIcon size={14} /> View Payment Receipt
+                    </button>
+                  )}
                 </div>
 
-                {/* Action Buttons (Sirf Pending Tab mein) */}
+                {/* Actions */}
                 {activeTab === 'pending' && (
                   <div className="grid grid-cols-2 gap-3">
                     <button
@@ -150,15 +154,6 @@ export default function AdminDeposits() {
                     </button>
                   </div>
                 )}
-
-                {/* Status Badges (Approved/Rejected Tab mein) */}
-                {activeTab !== 'pending' && (
-                  <div className={`text-center py-2 rounded-xl text-[10px] font-black uppercase tracking-widest border
-                    ${activeTab === 'approved' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' : 'bg-red-500/10 border-red-500/20 text-red-500'}`}
-                  >
-                    Status: {activeTab}
-                  </div>
-                )}
               </motion.div>
             ))}
           </AnimatePresence>
@@ -169,11 +164,30 @@ export default function AdminDeposits() {
           </div>
         )}
       </div>
+
+      {/* FULL SCREEN IMAGE MODAL */}
+      <AnimatePresence>
+        {selectedImage && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm flex flex-col items-center justify-center p-4"
+          >
+            <button 
+              onClick={() => setSelectedImage(null)}
+              className="absolute top-6 right-6 p-2 bg-white/10 rounded-full text-white hover:bg-red-500 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <img src={selectedImage} alt="Payment Receipt" className="max-w-full max-h-[80vh] rounded-2xl border border-white/20 object-contain" />
+            <a href={selectedImage} download target="_blank" className="mt-6 px-6 py-2 bg-amber-400 text-black font-bold rounded-xl text-sm">Open in New Tab</a>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   )
 }
 
-// Chota sa helper icon
 function CreditCardIcon({ size }: { size: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

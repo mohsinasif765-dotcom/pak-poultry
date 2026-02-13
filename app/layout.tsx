@@ -16,7 +16,7 @@ export const metadata = {
   title: "Pak Poultry Business",
   description: "Investment & Growth",
   manifest: "/manifest.json",
-  themeColor: "#022c22",
+  
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -27,6 +27,12 @@ export const metadata = {
     // Agar Apple devices k liye alag icon rakhna ho
     apple: "/logo.png", 
   },
+};
+
+export const viewport = {
+  themeColor: "#022c22",
+  width: "device-width",
+  initialScale: 1,
 };
 export default function RootLayout({
   children,

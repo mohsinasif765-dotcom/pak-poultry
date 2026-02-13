@@ -15,7 +15,8 @@ import {
   Zap,
   Loader2,
   ShoppingBag,
-  ArrowDownCircle
+  ArrowDownCircle,
+  Timer
 } from 'lucide-react'
 
 export default function Dashboard() {
@@ -47,7 +48,6 @@ export default function Dashboard() {
     fetchStats()
   }, [])
 
-  // Time format helper (e.g. "5m ago")
   const formatTime = (dateStr: string) => {
     const date = new Date(dateStr)
     const now = new Date()
@@ -80,6 +80,21 @@ export default function Dashboard() {
       animate={{ opacity: 1 }} 
       className="space-y-6 pb-12 pt-4 px-1"
     >
+      {/* --- REWARD ZONE OPTION --- */}
+      <div className="px-2 mb-[-12px] flex justify-end">
+        <Link href="/dashboard/rewards">
+          <motion.div 
+            whileTap={{ scale: 0.95 }}
+            className="flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 px-4 py-2 rounded-full cursor-pointer group"
+          >
+            <Timer size={14} className="text-amber-400 animate-pulse" />
+            <span className="text-[10px] font-black text-amber-400 uppercase tracking-wider">
+              Check Rewards Timer
+            </span>
+          </motion.div>
+        </Link>
+      </div>
+
       {/* --- SECTION 1: MAIN EGG INVENTORY --- */}
       <div className="relative group px-2">
         <div className="absolute -inset-0.5 bg-gradient-to-r from-amber-500 to-yellow-600 rounded-3xl blur opacity-20 transition duration-1000"></div>
@@ -116,7 +131,7 @@ export default function Dashboard() {
         {[
           { label: 'Total Hens', value: stats.hens.toString(), icon: Zap, color: 'text-blue-400' },
           { label: 'Team Members', value: stats.team_count.toString(), icon: Users, color: 'text-purple-400' },
-          { label: 'Total ROI', value: `PKR ${stats.total_roi}`, icon: TrendingUp, color: 'text-green-400' },
+          { label: 'Total ROI', value: `${stats.total_roi}`, icon: TrendingUp, color: 'text-green-400' },
           { label: 'Farm Status', value: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
         ].map((stat, idx) => (
           <div key={idx} className="shiny-card p-4 bg-white/5 border-white/5 rounded-2xl">
@@ -151,7 +166,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* --- SECTION 4: RECENT ACTIVITY (DYNAMIC) --- */}
+      {/* --- SECTION 4: RECENT ACTIVITY --- */}
       <div className="space-y-3 px-2">
         <h3 className="text-white font-bold text-sm px-1 flex justify-between items-center">
           Recent Activity
