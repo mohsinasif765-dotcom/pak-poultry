@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   ArrowLeft,
   Download,
-  Smartphone // New icon for the card
+  Smartphone 
 } from 'lucide-react'
 import Link from 'next/link'
 

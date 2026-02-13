@@ -22,7 +22,7 @@ const nextConfig: NextConfig = {
     ],
   },
   reactStrictMode: true,
-  // Ye line Turbopack error khatam kar de gi
+  
   experimental: {
     turbopack: {}, 
   } as any,

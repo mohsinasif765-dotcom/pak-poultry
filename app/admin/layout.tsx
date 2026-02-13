@@ -39,12 +39,12 @@ export default function AdminLayout({
 
       console.log("Layout Check - Role:", profile?.role);
 
-      // AGAR ROLE ADMIN NAHI HAI TO DASHBOARD BHEJO
+      
       if (profile?.role !== 'admin') {
         console.log("Not an admin, kicking to dashboard");
         router.push('/dashboard')
       } else {
-        // AGAR ADMIN HAI TO YAHAN RUKNAY DO
+        
         console.log("Admin confirmed, staying on admin path");
         setIsAuthorized(true)
       }
@@ -52,7 +52,7 @@ export default function AdminLayout({
     checkAdmin()
   }, [router, supabase])
 
-  // Jab tak check ho raha hai, loader dikhao
+  
   if (isAuthorized === null) {
     return (
       <div className="h-screen flex items-center justify-center text-amber-400 bg-[#022c22]">

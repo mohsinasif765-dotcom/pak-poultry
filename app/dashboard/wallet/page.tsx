@@ -34,10 +34,10 @@ export default function WalletPage() {
     </div>
   )
 
-  // FIX: Added safe navigation for balance calculation
+  
   const pkrBalance = ((data?.eggs_balance || 0) * (data?.current_rate || 0)).toFixed(2)
 
-  // FIX: Added || [] to ensure filteredTransactions is never undefined
+  
   const filteredTransactions = data?.transactions?.filter((t: any) => {
     if (activeFilter === 'All') return true
     if (activeFilter === 'Deposits') return t.type === 'deposit'

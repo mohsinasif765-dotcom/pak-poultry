@@ -29,13 +29,12 @@ export default function AdminDeposits() {
     fetchRequests(activeTab)
   }, [activeTab])
 
-  // Approval/Rejection Logic (Bina image delete kiye)
   const handleAction = async (id: number, newStatus: 'approved' | 'rejected') => {
     if (!confirm(`Are you sure you want to ${newStatus} this request?`)) return;
     
     setProcessingId(id)
 
-    // Database mein sirf status update karna
+   
     const { error } = await supabase.rpc('process_deposit_request', {
         p_request_id: id,
         p_new_status: newStatus

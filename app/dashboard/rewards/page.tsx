@@ -21,12 +21,12 @@ export default function RewardZone() {
     }
     fetchInvestments()
 
-    // Har second clock update karna taake timer chale
+   
     const timerId = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(timerId)
   }, [])
 
-  // Time remaining calculate karne ka function
+  
   const getTimeRemaining = (nextRewardAt: string) => {
     const target = new Date(nextRewardAt).getTime()
     const diff = target - now.getTime()

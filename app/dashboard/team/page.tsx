@@ -36,7 +36,7 @@ export default function TeamPage() {
     fetchTeam()
   }, [])
 
-  // AB YE LINE BILKUL SAHI HAI
+ 
   const directMembers = teamData?.members || []
   const referralLink = `https://pakpoultry.com/register?ref=${teamData?.username || 'user'}`
 

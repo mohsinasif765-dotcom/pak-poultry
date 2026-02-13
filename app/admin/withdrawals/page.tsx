@@ -39,14 +39,14 @@ export default function AdminWithdrawals() {
 
     setProcessingId(id)
     
-    // Ab direct update nahi, balkay RPC call ho rahi hai
+    
     const { error } = await supabase.rpc('process_withdrawal_request', {
         p_request_id: id,
         p_new_status: newStatus
     })
 
     if (!error) {
-      // List se foran remove kar dena
+      
       setRequests(prev => prev.filter(r => r.id !== id))
     } else {
       alert("Error processing withdrawal: " + error.message)

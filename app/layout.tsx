@@ -23,8 +23,8 @@ export const metadata = {
     title: "Pak Poultry",
   },
   icons: {
-    icon: "/logo.png", // Public folder ka path
-    // Agar Apple devices k liye alag icon rakhna ho
+    icon: "/logo.png", 
+    
     apple: "/logo.png", 
   },
 };

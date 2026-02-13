@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { createClient } from '@/lib/supabase'
-import { useRouter } from 'next/navigation' // Router import kiya
+import { useRouter } from 'next/navigation' 
 import { 
   Users, 
   TrendingUp, 
@@ -10,12 +10,12 @@ import {
   ArrowDownLeft, 
   ArrowUpRight, 
   ShieldCheck,
-  LayoutDashboard // Dashboard icon ke liye
+  LayoutDashboard 
 } from 'lucide-react'
 
 export default function AdminDashboard() {
   const supabase = createClient()
-  const router = useRouter() // Router initialize kiya
+  const router = useRouter() 
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState<any>(null)
 

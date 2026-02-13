@@ -38,14 +38,13 @@ export default function ProfilePage() {
   const [showInstallBtn, setShowInstallBtn] = useState(false);
 
   useEffect(() => {
-    // 1. Install prompt event ko listen karna
+    
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setDeferredPrompt(e);
       setShowInstallBtn(true);
     });
 
-    // 2. Check karna agar app pehle se installed hai
     if (window.matchMedia('(display-mode: standalone)').matches) {
       setShowInstallBtn(false);
     }
@@ -216,7 +215,7 @@ export default function ProfilePage() {
               label="Transaction History" 
               onClick={() => router.push('/dashboard/history')}
             />
-            {/* NAYA INSTALL APP BUTTON (Already in code) */}
+           
             {showInstallBtn && (
               <>
                 <div className="h-[1px] bg-white/5 mx-4" />

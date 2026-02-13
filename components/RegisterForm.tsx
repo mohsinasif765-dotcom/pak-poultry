@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-// Note: Ab hum 'createClient' import kar rahe hain, direct 'supabase' nahi
+
 import { createClient } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function AuthForm() {
-  const supabase = createClient() // Yahan client initiate karein (Cookie support ke sath)
+  const supabase = createClient() 
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -62,10 +62,9 @@ export default function AuthForm() {
 
     if (error) throw error
 
-    // --- NAYA LOGIC YAHAN SE SHURU HOTA HAI ---
     const user = data.user
     if (user) {
-      // Profile se role nikalain
+      
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -77,13 +76,13 @@ export default function AuthForm() {
       router.refresh()
       
       setTimeout(() => {
-        // Role ke mutabiq rasta tay karein
+       
         const target = isAdmin ? '/admin' : '/dashboard'
         console.log("Redirecting to:", target)
         router.push(target)
       }, 500)
     }
-    // --- NAYA LOGIC KHATAM ---
+   
 
   } catch (error: any) {
     setErrorMsg(error.message || "Authentication failed")

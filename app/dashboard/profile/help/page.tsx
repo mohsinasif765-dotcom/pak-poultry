@@ -16,8 +16,8 @@ import {
 
 // Support Data
 const supportContact = {
-  whatsapp: "923287007298", // Updated number without + for URL
-  communityLink: "https://chat.whatsapp.com/CpQeTa81D8P5KnTFkPTyLj",
+  whatsapp: "923257343008", // Updated number without + for URL
+  communityLink: "https://whatsapp.com/channel/0029VbCBme959PwNIGWW6q1J",
   email: "support@pakpoultry.com",
   timing: "10:00 AM - 10:00 PM"
 }
@@ -116,7 +116,7 @@ export default function HelpPage() {
             <Users className="text-white w-6 h-6" />
           </div>
           <div className="text-center">
-            <p className="text-white font-bold text-sm">Community</p>
+            <p className="text-white font-bold text-sm">whatsaap Channel</p>
             <p className="text-[10px] text-amber-300">Join Group</p>
           </div>
         </motion.button>

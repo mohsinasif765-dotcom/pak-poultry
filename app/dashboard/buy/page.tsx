@@ -11,11 +11,11 @@ import {
 export default function BuyPage() {
   const supabase = createClient()
   
-  // Data States
+  
   const [adminInfo, setAdminInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  // Interaction States
+  
   const [modalOpen, setModalOpen] = useState(false)
   const [quantity, setQuantity] = useState<number>(1)
   const [method, setMethod] = useState<'Ubank' | 'EasyPaisa' | null>(null)
@@ -36,7 +36,7 @@ export default function BuyPage() {
 
   useEffect(() => {
     async function loadData() {
-      // Hum yahan purana RPC hi use kar rahe hain, bas us mein se admin info nikal li hai
+      
       const { data } = await supabase.rpc('get_buy_screen_data')
       if (data && data.admin) {
         setAdminInfo(data.admin)
@@ -62,7 +62,7 @@ export default function BuyPage() {
         img.src = event.target?.result as string
         img.onload = () => {
           const canvas = document.createElement('canvas')
-          const MAX_WIDTH = 600 // Maximum width taake size kam rahe
+          const MAX_WIDTH = 600 
           const scaleSize = MAX_WIDTH / img.width
           canvas.width = MAX_WIDTH
           canvas.height = img.height * scaleSize
@@ -75,7 +75,7 @@ export default function BuyPage() {
               const compressedFile = new File([blob], file.name, { type: 'image/jpeg', lastModified: Date.now() })
               resolve(compressedFile)
             }
-          }, 'image/jpeg', 0.6) // 60% Quality (Bohat kam size hoga)
+          }, 'image/jpeg', 0.6) 
         }
       }
     })
@@ -100,13 +100,13 @@ export default function BuyPage() {
 
     let receiptUrl = ''
 
-    // 1. Pehle Image Compress aur Upload hogi
+    
     try {
       const compressedImage = await compressImage(screenshot)
       const fileName = `${Date.now()}-${user?.id}.jpg`
       
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('receipts') // Supabase mein yeh bucket banani hogi
+        .from('receipts') 
         .upload(fileName, compressedImage)
 
       if (uploadError) throw uploadError

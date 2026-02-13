@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Image from "next/image";
 import RegisterForm from "@/components/RegisterForm";
 
-// Next.js 16 naya standard: themeColor ko viewport mein rakhein
+
 export const viewport = {
   themeColor: "#022c22",
   width: "device-width",

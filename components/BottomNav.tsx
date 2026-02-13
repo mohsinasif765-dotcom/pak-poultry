@@ -6,7 +6,7 @@ import { LayoutDashboard, ShoppingBasket, Wallet, Users, User } from 'lucide-rea
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
-// Navigation Items ki configuration
+
 const navItems = [
   { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Team', icon: Users, path: '/dashboard/team' },

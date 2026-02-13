@@ -45,7 +45,6 @@ export default function SellPage() {
     if (!quantity || isOverLimit || !walletName || !walletNumber) return
     setProcessing(true)
     
-    // Naya Secure RPC Call
     const { error } = await supabase.rpc('submit_sell_request', {
       p_quantity: parseInt(quantity),
       p_buyer_name: selectedBuyer.name,
@@ -60,7 +59,7 @@ export default function SellPage() {
       setProcessing(false)
       setSuccess(true)
       
-      // Local state update kar den taake user ko balance kam nazar aaye
+      
       setMyEggs(prev => prev - parseInt(quantity))
 
       setTimeout(() => {
