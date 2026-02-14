@@ -16,7 +16,7 @@ import {
 
 // Support Data
 const supportContact = {
-  whatsapp: "923257343008", // Updated number without + for URL
+  whatsapp: "923257343008", 
   communityLink: "https://whatsapp.com/channel/0029VbCBme959PwNIGWW6q1J",
   email: "support@pakpoultry.com",
   timing: "10:00 AM - 10:00 PM"

@@ -20,8 +20,16 @@ export default function TeamPage() {
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
   const [teamData, setTeamData] = useState<any>(null)
+  
+  // Dynamic domain state add ki hai
+  const [origin, setOrigin] = useState('')
 
   useEffect(() => {
+    // Component mount hotay hi current domain utha lay ga
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin)
+    }
+
     async function fetchTeam() {
       try {
         const { data, error } = await supabase.rpc('get_team_data')
@@ -36,9 +44,10 @@ export default function TeamPage() {
     fetchTeam()
   }, [])
 
- 
   const directMembers = teamData?.members || []
-  const referralLink = `https://pakpoultry.com/register?ref=${teamData?.username || 'user'}`
+  
+  // Hardcoded link hata kar dynamic origin use kiya hai
+  const referralLink = `${origin}/?ref=${teamData?.username || 'user'}`
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink)

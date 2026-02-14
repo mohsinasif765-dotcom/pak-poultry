@@ -33,7 +33,15 @@ export default function Dashboard() {
     recent_activity: [] as any[]
   })
 
+  // Dynamic origin state
+  const [origin, setOrigin] = useState('')
+
   useEffect(() => {
+    
+    if (typeof window !== 'undefined') {
+      setOrigin(window.location.origin)
+    }
+
     async function fetchStats() {
       try {
         const { data, error } = await supabase.rpc('get_dashboard_stats')
@@ -59,7 +67,8 @@ export default function Dashboard() {
     return date.toLocaleDateString()
   }
 
-  const referralLink = `https://pakpoultry.com/register?ref=${stats.username || 'user'}`
+  // Ab yahan hardcoded link ki jagah dynamic origin use ho raha hai
+  const referralLink = `${origin}/?ref=${stats.username || 'user'}`
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(referralLink)

@@ -226,7 +226,15 @@ export default function SellPage() {
                        </div>
                        <div className="relative">
                          <Hash size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-                         <input type="text" placeholder="Wallet Number" value={walletNumber} onChange={(e) => setWalletNumber(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm font-mono outline-none" />
+                         {/* YAHAN UPDATE KIYA HAI */}
+                         <input 
+                           type="number" 
+                           inputMode="numeric" 
+                           placeholder="Wallet Number" 
+                           value={walletNumber} 
+                           onChange={(e) => setWalletNumber(e.target.value)} 
+                           className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm font-mono outline-none" 
+                         />
                        </div>
                     </div>
 
