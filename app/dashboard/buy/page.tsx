@@ -18,7 +18,7 @@ export default function BuyPage() {
   
   const [modalOpen, setModalOpen] = useState(false)
   const [quantity, setQuantity] = useState<number>(1)
-  const [method, setMethod] = useState<'Ubank' | 'EasyPaisa' | null>(null)
+  const [method, setMethod] = useState<'Sadapay' | 'Jazz Cash' | null>(null)
   const [trxId, setTrxId] = useState('')
   const [screenshot, setScreenshot] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -255,17 +255,17 @@ export default function BuyPage() {
 
                   {/* PAYMENT METHODS */}
                   <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => setMethod('Ubank')} className={`p-3 rounded-2xl border flex items-center justify-center gap-2 text-xs font-bold ${method === 'Ubank' ? 'bg-red-600 border-red-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}><CreditCard size={14}/> Ubank</button>
-                    <button onClick={() => setMethod('EasyPaisa')} className={`p-3 rounded-2xl border flex items-center justify-center gap-2 text-xs font-bold ${method === 'EasyPaisa' ? 'bg-green-600 border-green-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}><CreditCard size={14}/> EasyPaisa</button>
+                    <button onClick={() => setMethod('Sadapay')} className={`p-3 rounded-2xl border flex items-center justify-center gap-2 text-xs font-bold ${method === 'Sadapay' ? 'bg-red-600 border-red-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}><CreditCard size={14}/> Sadapay</button>
+                    <button onClick={() => setMethod('Jazz Cash')} className={`p-3 rounded-2xl border flex items-center justify-center gap-2 text-xs font-bold ${method === 'Jazz Cash' ? 'bg-green-600 border-green-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}><CreditCard size={14}/> Jazz Cash</button>
                   </div>
 
                   {method && adminInfo && (
                     <div className="bg-black/30 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
                       <div>
                         <p className="text-[10px] text-white/40 uppercase">{method} Account</p>
-                        <p className="text-lg font-bold text-white font-mono">{method === 'Ubank' ? adminInfo.ubank : adminInfo.easypaisa}</p>
+                        <p className="text-lg font-bold text-white font-mono">{method === 'Sadapay' ? adminInfo.ubank : adminInfo.easypaisa}</p>
                       </div>
-                      <button onClick={() => handleCopy(method === 'Ubank' ? adminInfo.ubank : adminInfo.easypaisa)} className="p-2 bg-emerald-500 rounded-lg text-emerald-950">
+                      <button onClick={() => handleCopy(method === 'Sadapay' ? adminInfo.ubank : adminInfo.easypaisa)} className="p-2 bg-emerald-500 rounded-lg text-emerald-950">
                         {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                       </button>
                     </div>

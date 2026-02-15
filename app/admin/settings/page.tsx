@@ -167,23 +167,23 @@ export default function AdminSettings() {
           </div>
           <div className="space-y-5">
             <div>
-              <label className="text-[10px] text-white/40 uppercase font-bold ml-1">Ubank Number</label>
+              <label className="text-[10px] text-white/40 uppercase font-bold ml-1">Sadapay Number</label>
               <input 
                 type="text"
                 value={rates.Ubank}
                 onChange={(e) => setRates({...rates, Ubank: e.target.value})}
                 className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 mt-1 text-sm font-bold text-white outline-none focus:border-purple-500/50 transition-all"
-                placeholder="Enter Ubank Number"
+                placeholder="Enter Sadapay Number"
               />
             </div>
             <div>
-              <label className="text-[10px] text-white/40 uppercase font-bold ml-1">EasyPaisa Number</label>
+              <label className="text-[10px] text-white/40 uppercase font-bold ml-1">Jazz Cash Number</label>
               <input 
                 type="text"
                 value={rates.easypaisa}
                 onChange={(e) => setRates({...rates, easypaisa: e.target.value})}
                 className="w-full bg-black/40 border border-white/10 rounded-2xl p-4 mt-1 text-sm font-bold text-white outline-none focus:border-purple-500/50 transition-all"
-                placeholder="Enter EasyPaisa Number"
+                placeholder="Enter Jazz Cash Number"
               />
             </div>
           </div>

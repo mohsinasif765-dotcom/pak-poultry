@@ -20,7 +20,7 @@ export default function SellPage() {
   const [quantity, setQuantity] = useState<string>('')
   const [walletName, setWalletName] = useState('')
   const [walletNumber, setWalletNumber] = useState('')
-  const [walletMethod, setWalletMethod] = useState('Ubank')
+  const [walletMethod, setWalletMethod] = useState('Sadapay')
   const [processing, setProcessing] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -216,7 +216,7 @@ export default function SellPage() {
                     {/* NEW: Wallet Info Fields */}
                     <div className="space-y-2">
                        <div className="flex gap-2 mb-2">
-                         {['Ubank', 'EasyPaisa'].map(m => (
+                         {['Sadapay', 'Jazz Cash'].map(m => (
                            <button key={m} onClick={() => setWalletMethod(m)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold border ${walletMethod === m ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}>{m}</button>
                          ))}
                        </div>
