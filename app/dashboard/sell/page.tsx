@@ -20,7 +20,7 @@ export default function SellPage() {
   const [quantity, setQuantity] = useState<string>('')
   const [walletName, setWalletName] = useState('')
   const [walletNumber, setWalletNumber] = useState('')
-  const [walletMethod, setWalletMethod] = useState('Sadapay')
+  const [bankName, setBankName] = useState('') // free-text bank/method name
   const [processing, setProcessing] = useState(false)
   const [success, setSuccess] = useState(false)
 
@@ -40,9 +40,13 @@ export default function SellPage() {
   // Calculate Total
   const totalAmount = quantity ? (parseInt(quantity) * (selectedBuyer?.rate || 0)).toFixed(2) : 0
   const isOverLimit = parseInt(quantity) > myEggs
+  const isBelowMin = quantity && parseInt(quantity) < 2 // enforce minimum 2 eggs per set
 
   const handleSell = async () => {
-    if (!quantity || isOverLimit || !walletName || !walletNumber) return
+    if (!quantity || isOverLimit || isBelowMin || !walletName || !walletNumber || !bankName) {
+      alert("Please fill all fields correctly.");
+      return
+    }
     setProcessing(true)
     
     const { error } = await supabase.rpc('submit_sell_request', {
@@ -52,14 +56,12 @@ export default function SellPage() {
       p_total_amount: parseFloat(totalAmount as string),
       p_wallet_name: walletName,
       p_wallet_number: walletNumber,
-      p_method: walletMethod
+      p_method: bankName // User jo bhi likhay ga (JazzCash, HBL, etc)
     })
 
     if (!error) {
       setProcessing(false)
       setSuccess(true)
-      
-      
       setMyEggs(prev => prev - parseInt(quantity))
 
       setTimeout(() => {
@@ -68,6 +70,7 @@ export default function SellPage() {
         setQuantity('')
         setWalletName('')
         setWalletNumber('')
+        setBankName('')
       }, 2500)
     } else {
       alert("Error: " + error.message)
@@ -207,35 +210,57 @@ export default function SellPage() {
                     <div className="space-y-1">
                        <label className="text-[10px] text-white/40 uppercase ml-1">Quantity</label>
                        <div className="relative">
-                         <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} className={`w-full bg-white/5 border ${isOverLimit ? 'border-red-500' : 'border-white/10'} rounded-xl p-4 text-white font-bold outline-none`} placeholder="0" />
+                         <input
+                           type="number"
+                           min={0}
+                           value={quantity}
+                           onChange={(e) => setQuantity(e.target.value)}
+                           className={`w-full bg-white/5 border ${isOverLimit || isBelowMin ? 'border-red-500' : 'border-white/10'} rounded-xl p-4 text-white font-bold outline-none`}
+                           placeholder="0"
+                         />
                          <button onClick={() => setQuantity(myEggs.toString())} className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-amber-400 font-bold">MAX</button>
                        </div>
                        {isOverLimit && <p className="text-red-500 text-[10px] mt-1 ml-1 flex items-center gap-1"><AlertCircle size={10}/> Aapke paas sirf {myEggs} eggs hain.</p>}
+                       {isBelowMin && <p className="text-red-500 text-[10px] mt-1 ml-1 flex items-center gap-1"><AlertCircle size={10}/> Minimum 2 eggs per set required.</p>}
                     </div>
 
-                    {/* NEW: Wallet Info Fields */}
-                    <div className="space-y-2">
-                       <div className="flex gap-2 mb-2">
-                         {['Sadapay', 'Jazz Cash'].map(m => (
-                           <button key={m} onClick={() => setWalletMethod(m)} className={`flex-1 py-2 rounded-lg text-[10px] font-bold border ${walletMethod === m ? 'bg-emerald-500 border-emerald-500 text-white' : 'bg-white/5 border-white/10 text-white/40'}`}>{m}</button>
-                         ))}
-                       </div>
-                       <div className="relative">
-                         <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-                         <input type="text" placeholder="Account Name" value={walletName} onChange={(e) => setWalletName(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm outline-none" />
-                       </div>
-                       <div className="relative">
-                         <Hash size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-                         {/* YAHAN UPDATE KIYA HAI */}
-                         <input 
-                           type="number" 
-                           inputMode="numeric" 
-                           placeholder="Wallet Number" 
-                           value={walletNumber} 
-                           onChange={(e) => setWalletNumber(e.target.value)} 
-                           className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm font-mono outline-none" 
-                         />
-                       </div>
+                    {/* Input Fields Section inside Modal */}
+                    <div className="space-y-3">
+                      {/* Account Title */}
+                      <div className="relative">
+                        <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+                        <input 
+                          type="text" 
+                          placeholder="Account Title (e.g. John Doe)" 
+                          value={walletName} 
+                          onChange={(e) => setWalletName(e.target.value)} 
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-emerald-500/50 transition-all" 
+                        />
+                      </div>
+
+                      {/* Account Number */}
+                      <div className="relative">
+                        <Hash size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+                        <input 
+                          type="text" 
+                          placeholder="Account Number / IBAN" 
+                          value={walletNumber} 
+                          onChange={(e) => setWalletNumber(e.target.value)} 
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm font-mono outline-none focus:border-emerald-500/50 transition-all" 
+                        />
+                      </div>
+
+                      {/* Bank Name (The Free Text Field) */}
+                      <div className="relative">
+                        <Banknote size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
+                        <input
+                          type="text"
+                          placeholder="Bank Name (e.g. EasyPaisa, HBL, Meezan)"
+                          value={bankName}
+                          onChange={(e) => setBankName(e.target.value)}
+                          className="w-full bg-white/5 border border-white/10 rounded-xl p-3 pl-10 text-white text-sm outline-none focus:border-emerald-500/50 transition-all"
+                        />
+                      </div>
                     </div>
 
                     <div className="flex justify-between items-end pt-2">
@@ -243,7 +268,7 @@ export default function SellPage() {
                        <p className="text-2xl font-black text-white"><span className="text-sm text-amber-400 mr-1">PKR</span>{totalAmount}</p>
                     </div>
 
-                    <button onClick={handleSell} disabled={!quantity || isOverLimit || !walletName || !walletNumber || processing} className="w-full py-4 rounded-xl font-bold text-lg mt-4 flex items-center justify-center gap-2 btn-gold disabled:opacity-50 transition-all">
+                    <button onClick={handleSell} disabled={!quantity || isOverLimit || isBelowMin || !walletName || !walletNumber || !bankName || processing} className="w-full py-4 rounded-xl font-bold text-lg mt-4 flex items-center justify-center gap-2 btn-gold disabled:opacity-50 transition-all">
                       {processing ? <Loader2 className="animate-spin" size={20}/> : <><Banknote size={20} /> Sell Now</>}
                     </button>
                   </div>
