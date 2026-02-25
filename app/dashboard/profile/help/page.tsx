@@ -16,7 +16,7 @@ import {
 
 // Support Data
 const supportContact = {
-  whatsapp: "923285323238", 
+  whatsapp: "923175908492", 
   communityLink: "https://chat.whatsapp.com/Eej33iNbt1G7QXqEL53fvU?mode=hqctcla",
   email: "support@pakpoultry.com",
   timing: "10:00 AM - 10:00 PM"

@@ -10,7 +10,7 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   // Number ko international format (92) mein rakha hai taake link sahi chale
-  const whatsappNumber = "923285323238"
+  const whatsappNumber = "923175908492"
   
   return (
     <div className="min-h-screen bg-[#022c22] text-white pb-32 relative">
