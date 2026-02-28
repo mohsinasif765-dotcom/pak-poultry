@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
@@ -20,9 +20,12 @@ import {
 } from 'lucide-react'
 
 export default function Dashboard() {
-  const supabase = createClient()
+  // Supabase client ko memoize kiya hai taake ye stable rahe
+  const supabase = useMemo(() => createClient(), [])
+  
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [origin, setOrigin] = useState('')
   
   const [stats, setStats] = useState({
     eggs: 0,
@@ -33,30 +36,38 @@ export default function Dashboard() {
     recent_activity: [] as any[]
   })
 
-  // Dynamic origin state
-  const [origin, setOrigin] = useState('')
-
   useEffect(() => {
-    
+    // Window check for origin
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin)
     }
 
     async function fetchStats() {
       try {
+        setLoading(true)
+        // Supabase RPC call
         const { data, error } = await supabase.rpc('get_dashboard_stats')
-        if (error) throw error
-        if (data) setStats(data)
-      } catch (error) {
-        console.error('Dashboard Error:', error)
+        
+        if (error) {
+          console.error('RPC Error:', error.message)
+          return
+        }
+        
+        if (data) {
+          setStats(data)
+        }
+      } catch (err) {
+        console.error('Dashboard Unexpected Error:', err)
       } finally {
         setLoading(false)
       }
     }
+
     fetchStats()
-  }, [])
+  }, [supabase]) // Supabase dependency added for safety
 
   const formatTime = (dateStr: string) => {
+    if (!dateStr) return '---'
     const date = new Date(dateStr)
     const now = new Date()
     const diffInMins = Math.floor((now.getTime() - date.getTime()) / 60000)
@@ -67,13 +78,17 @@ export default function Dashboard() {
     return date.toLocaleDateString()
   }
 
-  // Ab yahan hardcoded link ki jagah dynamic origin use ho raha hai
-  const referralLink = `${origin}/?ref=${stats.username || 'user'}`
+  // Referral link calculation
+  const referralLink = `${origin}/?ref=${stats?.username || 'user'}`
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(referralLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
   }
 
   if (loading) return (
@@ -112,7 +127,7 @@ export default function Dashboard() {
             <div>
               <p className="text-emerald-400/60 text-xs font-bold uppercase tracking-widest">Available Eggs</p>
               <h1 className="text-5xl font-black text-white mt-1 flex items-baseline gap-2">
-                {stats.eggs.toLocaleString()} <span className="text-amber-400 text-lg">Eggs</span>
+                {stats?.eggs?.toLocaleString() || 0} <span className="text-amber-400 text-lg">Eggs</span>
               </h1>
             </div>
             <div className="bg-amber-400/10 p-3 rounded-2xl border border-amber-400/20">
@@ -138,9 +153,9 @@ export default function Dashboard() {
       {/* --- SECTION 2: STATS GRID --- */}
       <div className="grid grid-cols-2 gap-4 px-2">
         {[
-          { label: 'Total Hens', value: stats.hens.toString(), icon: Zap, color: 'text-blue-400' },
-          { label: 'Team Members', value: stats.team_count.toString(), icon: Users, color: 'text-purple-400' },
-          { label: 'Total ROI', value: `${stats.total_roi}`, icon: TrendingUp, color: 'text-green-400' },
+          { label: 'Total Hens', value: stats?.hens?.toString() || '0', icon: Zap, color: 'text-blue-400' },
+          { label: 'Team Members', value: stats?.team_count?.toString() || '0', icon: Users, color: 'text-purple-400' },
+          { label: 'Total ROI', value: `${stats?.total_roi || 0}`, icon: TrendingUp, color: 'text-green-400' },
           { label: 'Farm Status', value: 'Active', icon: CheckCircle2, color: 'text-emerald-400' },
         ].map((stat, idx) => (
           <div key={idx} className="shiny-card p-4 bg-white/5 border-white/5 rounded-2xl">
@@ -167,7 +182,7 @@ export default function Dashboard() {
             />
             <button 
               onClick={copyToClipboard}
-              className="absolute right-2 top-2 bottom-2 bg-emerald-500 text-emerald-950 px-4 rounded-lg font-bold text-xs"
+              className="absolute right-2 top-2 bottom-2 bg-emerald-500 text-emerald-950 px-4 rounded-lg font-bold text-xs active:scale-95 transition-transform"
             >
               {copied ? 'COPIED' : 'COPY'}
             </button>
@@ -182,7 +197,7 @@ export default function Dashboard() {
           <span className="text-[10px] text-white/20 font-normal">Last 5 actions</span>
         </h3>
         
-        {stats.recent_activity.length > 0 ? (
+        {stats?.recent_activity?.length > 0 ? (
           stats.recent_activity.map((activity, i) => (
             <div key={i} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
               <div className="flex items-center gap-3">

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { 
@@ -16,7 +16,9 @@ import {
 } from 'lucide-react'
 
 export default function HistoryPage() {
-  const supabase = createClient()
+  // Supabase client ko stable rakhne ke liye useMemo
+  const supabase = useMemo(() => createClient(), [])
+  
   const [transactions, setTransactions] = useState<any[]>([])
   const [filteredData, setFilteredData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -24,22 +26,36 @@ export default function HistoryPage() {
 
   useEffect(() => {
     async function fetchHistory() {
-      const { data, error } = await supabase.rpc('get_user_history')
-      if (data) {
-        setTransactions(data)
-        setFilteredData(data)
+      try {
+        setLoading(true)
+        const { data, error } = await supabase.rpc('get_user_history')
+        
+        if (error) {
+          console.error('History RPC Error:', error.message)
+          return
+        }
+
+        if (data) {
+          setTransactions(data)
+          setFilteredData(data)
+        }
+      } catch (err) {
+        console.error('Unexpected History Error:', err)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     fetchHistory()
-  }, [])
+  }, [supabase])
 
-  // Filter Logic
+  // Filter Logic - transactions array hone ka check add kiya hai
   useEffect(() => {
+    if (!transactions) return
+
     if (activeFilter === 'all') {
       setFilteredData(transactions)
     } else {
-      setFilteredData(transactions.filter(t => t.type === activeFilter))
+      setFilteredData(transactions.filter(t => t?.type === activeFilter))
     }
   }, [activeFilter, transactions])
 
@@ -50,6 +66,21 @@ export default function HistoryPage() {
       case 'referral_bonus': return <Users className="text-purple-400" size={20} />
       case 'withdrawal': return <ArrowUpRight className="text-red-400" size={20} />
       default: return <History className="text-white/40" size={20} />
+    }
+  }
+
+  // Date formatting ke liye safety check
+  const formatPKTime = (dateStr: string) => {
+    if (!dateStr) return '---'
+    try {
+      return new Date(dateStr).toLocaleString('en-PK', { 
+        day: '2-digit', 
+        month: 'short', 
+        hour: '2-digit', 
+        minute: '2-digit' 
+      })
+    } catch (e) {
+      return 'Invalid Date'
     }
   }
 
@@ -90,7 +121,7 @@ export default function HistoryPage() {
           {filteredData.length > 0 ? (
             filteredData.map((t, idx) => (
               <motion.div
-                key={t.id}
+                key={t?.id || idx}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.05 }}
@@ -98,29 +129,27 @@ export default function HistoryPage() {
               >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 shadow-inner">
-                    {getIcon(t.type)}
+                    {getIcon(t?.type || '')}
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white capitalize">{t.description || t.type}</h4>
+                    <h4 className="text-sm font-bold text-white capitalize">{t?.description || t?.type || 'Activity'}</h4>
                     <p className="text-[10px] text-white/30">
-                      {new Date(t.created_at).toLocaleString('en-PK', { 
-                        day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
-                      })}
+                      {formatPKTime(t?.created_at)}
                     </p>
                   </div>
                 </div>
                 
                 <div className="text-right">
-                  <p className={`text-sm font-black ${t.type === 'purchase' || t.type === 'withdrawal' ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {t.type === 'purchase' || t.type === 'withdrawal' ? '-' : '+'}
-                    {t.amount.toLocaleString()}
+                  <p className={`text-sm font-black ${t?.type === 'purchase' || t?.type === 'withdrawal' ? 'text-red-400' : 'text-emerald-400'}`}>
+                    {t?.type === 'purchase' || t?.type === 'withdrawal' ? '-' : '+'}
+                    {(t?.amount || 0).toLocaleString()}
                   </p>
                   <span className={`text-[8px] uppercase font-bold px-1.5 py-0.5 rounded ${
-                    t.status === 'completed' ? 'bg-green-500/10 text-green-500' : 
-                    t.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 
+                    t?.status === 'completed' ? 'bg-green-500/10 text-green-500' : 
+                    t?.status === 'pending' ? 'bg-amber-500/10 text-amber-500' : 
                     'bg-red-500/10 text-red-500'
                   }`}>
-                    {t.status}
+                    {t?.status || 'unknown'}
                   </span>
                 </div>
               </motion.div>

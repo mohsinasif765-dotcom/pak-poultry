@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { 
@@ -16,47 +16,58 @@ import {
 } from 'lucide-react'
 
 export default function TeamPage() {
-  const supabase = createClient()
+  // Supabase client ko stable rakhne ke liye useMemo
+  const supabase = useMemo(() => createClient(), [])
+  
   const [copied, setCopied] = useState(false)
   const [loading, setLoading] = useState(true)
   const [teamData, setTeamData] = useState<any>(null)
-  
-  // Dynamic domain state add ki hai
   const [origin, setOrigin] = useState('')
 
   useEffect(() => {
-    // Component mount hotay hi current domain utha lay ga
+    // Dynamic domain detection
     if (typeof window !== 'undefined') {
       setOrigin(window.location.origin)
     }
 
     async function fetchTeam() {
       try {
+        setLoading(true)
         const { data, error } = await supabase.rpc('get_team_data')
-        if (error) throw error
-        if (data) setTeamData(data)
+        
+        if (error) {
+          console.error("Team RPC Error:", error.message)
+          return
+        }
+        
+        if (data) {
+          setTeamData(data)
+        }
       } catch (err) {
-        console.error("Team Fetch Error:", err)
+        console.error("Unexpected Team Error:", err)
       } finally {
         setLoading(false)
       }
     }
     fetchTeam()
-  }, [])
+  }, [supabase])
 
+  // Safe variables for rendering
   const directMembers = teamData?.members || []
-  
-  // Hardcoded link hata kar dynamic origin use kiya hai
-  const referralLink = `${origin}/?ref=${teamData?.username || 'user'}`
+  const referralLink = `${origin || ''}/?ref=${teamData?.username || 'user'}`
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(referralLink)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const copyToClipboard = async () => {
+    try {
+      await navigator.clipboard.writeText(referralLink)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error("Copy failed:", err)
+    }
   }
 
   if (loading) return (
-    <div className="h-[60vh] flex items-center justify-center text-emerald-400">
+    <div className="h-[60vh] flex items-center justify-center text-emerald-400 bg-[#022c22]">
       <Loader2 className="animate-spin w-10 h-10" />
     </div>
   )
@@ -81,7 +92,7 @@ export default function TeamPage() {
         animate={{ y: 0, opacity: 1 }}
         className="relative overflow-hidden rounded-[2.5rem] bg-emerald-950 border border-white/10 p-8 shadow-2xl mx-1 group"
       >
-        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
+        <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-emerald-500/10 blur-3xl group-hover:bg-emerald-500/20 transition-all duration-700"></div>
         
         <div className="relative z-10 text-center">
           <p className="text-emerald-300/40 text-[10px] uppercase font-bold tracking-[0.2em] mb-2">Total Team Eggs Earned</p>
@@ -134,10 +145,10 @@ export default function TeamPage() {
         </div>
 
         <div className="space-y-3">
-          {directMembers.length > 0 ? (
+          {directMembers && directMembers.length > 0 ? (
             directMembers.map((member: any, index: number) => (
               <motion.div 
-                key={member.id} 
+                key={member?.id || index} 
                 initial={{ x: -20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
@@ -145,16 +156,16 @@ export default function TeamPage() {
               >
                 <div className="flex items-center gap-4">
                   <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-xl border
-                    ${member.status === 'active' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-white/20'}`}
+                    ${member?.status === 'active' ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-400' : 'bg-white/5 border-white/10 text-white/20'}`}
                   >
-                    {member.name.charAt(0).toUpperCase()}
+                    {member?.name?.charAt(0).toUpperCase() || '?'}
                   </div>
                   <div>
-                    <h4 className="text-white text-sm font-bold tracking-tight">{member.name}</h4>
+                    <h4 className="text-white text-sm font-bold tracking-tight">{member?.name || 'User'}</h4>
                     <div className="flex items-center gap-2 mt-1">
-                      <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${member.status === 'active' ? 'bg-emerald-400' : 'bg-white/20'}`} />
-                      <p className={`text-[9px] font-black uppercase tracking-widest ${member.status === 'active' ? 'text-emerald-400/60' : 'text-white/20'}`}>
-                        {member.status}
+                      <div className={`w-1.5 h-1.5 rounded-full animate-pulse ${member?.status === 'active' ? 'bg-emerald-400' : 'bg-white/20'}`} />
+                      <p className={`text-[9px] font-black uppercase tracking-widest ${member?.status === 'active' ? 'text-emerald-400/60' : 'text-white/20'}`}>
+                        {member?.status || 'inactive'}
                       </p>
                     </div>
                   </div>
@@ -163,7 +174,7 @@ export default function TeamPage() {
                 <div className="text-right bg-black/20 p-3 rounded-2xl border border-white/5">
                   <p className="text-[8px] text-white/30 uppercase font-bold mb-1">Bonus</p>
                   <p className="font-black text-amber-400 flex items-center justify-end gap-1 text-sm">
-                    <Egg size={12} /> +{member.profit}
+                    <Egg size={12} /> +{member?.profit || 0}
                   </p>
                 </div>
               </motion.div>

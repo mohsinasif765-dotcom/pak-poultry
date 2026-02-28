@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { 
@@ -9,13 +9,12 @@ import {
 } from 'lucide-react'
 
 export default function BuyPage() {
-  const supabase = createClient()
-  
+  // Supabase client ko memoize kiya taake ye stable rahe
+  const supabase = useMemo(() => createClient(), [])
   
   const [adminInfo, setAdminInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
-  
   const [modalOpen, setModalOpen] = useState(false)
   const [quantity, setQuantity] = useState<number>(1)
   const [method, setMethod] = useState<'Sadapay' | 'Jazz Cash' | null>(null)
@@ -36,23 +35,35 @@ export default function BuyPage() {
 
   useEffect(() => {
     async function loadData() {
-      
-      const { data } = await supabase.rpc('get_buy_screen_data')
-      if (data && data.admin) {
-        setAdminInfo(data.admin)
+      try {
+        const { data, error } = await supabase.rpc('get_buy_screen_data')
+        if (error) throw error
+        if (data && data.admin) {
+          setAdminInfo(data.admin)
+        }
+      } catch (err) {
+        console.error("Failed to load market data:", err)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     loadData()
-  }, [])
+  }, [supabase])
+
+  // Image preview cleanup to avoid memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   const handleCopy = (num: string) => {
+    if (!num) return
     navigator.clipboard.writeText(num)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // --- IMAGE COMPRESSION LOGIC (Client Side) ---
   const compressImage = (file: File): Promise<File> => {
     return new Promise((resolve) => {
       const reader = new FileReader()
@@ -84,6 +95,9 @@ export default function BuyPage() {
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0]
+      // Puraani URL khatam karein
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+      
       setScreenshot(file)
       setPreviewUrl(URL.createObjectURL(file))
     }
@@ -96,25 +110,26 @@ export default function BuyPage() {
     }
     
     setBuying(true)
-    const { data: { user } } = await supabase.auth.getUser()
-
-    let receiptUrl = ''
-
-    
     try {
-      const compressedImage = await compressImage(screenshot)
-      const fileName = `${Date.now()}-${user?.id}.jpg`
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      if (userError || !user) throw new Error("Please log in again to continue.")
+
+      let receiptUrl = ''
+
+      // 1. Image Compression & Upload
+      const compressedImageFile = await compressImage(screenshot)
+      const fileName = `${user.id}/${Date.now()}.jpg` // Path thora behtar kiya
       
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('receipts') 
-        .upload(fileName, compressedImage)
+        .upload(fileName, compressedImageFile)
 
       if (uploadError) throw uploadError
 
       const { data: publicUrlData } = supabase.storage.from('receipts').getPublicUrl(fileName)
       receiptUrl = publicUrlData.publicUrl
 
-     // 2. Uske baad Database mein entry jayegi (Ab secure RPC ke zariye)
+      // 2. Database Entry via RPC
       const { error: dbError } = await supabase.rpc('create_purchase_request', {
         p_quantity: quantity,
         p_method: method,
@@ -263,9 +278,9 @@ export default function BuyPage() {
                     <div className="bg-black/30 p-4 rounded-2xl border border-white/5 flex justify-between items-center">
                       <div>
                         <p className="text-[10px] text-white/40 uppercase">{method} Account</p>
-                        <p className="text-lg font-bold text-white font-mono">{method === 'Sadapay' ? adminInfo.ubank : adminInfo.easypaisa}</p>
+                        <p className="text-lg font-bold text-white font-mono">{method === 'Sadapay' ? adminInfo?.ubank : adminInfo?.easypaisa}</p>
                       </div>
-                      <button onClick={() => handleCopy(method === 'Sadapay' ? adminInfo.ubank : adminInfo.easypaisa)} className="p-2 bg-emerald-500 rounded-lg text-emerald-950">
+                      <button onClick={() => handleCopy(method === 'Sadapay' ? adminInfo?.ubank : adminInfo?.easypaisa)} className="p-2 bg-emerald-500 rounded-lg text-emerald-950 active:scale-90 transition-transform">
                         {copied ? <CheckCircle2 size={18} /> : <Copy size={18} />}
                       </button>
                     </div>
@@ -274,7 +289,7 @@ export default function BuyPage() {
                   {/* TRX ID */}
                   <div className="space-y-1">
                     <label className="text-[10px] text-white/40 uppercase ml-1"><Hash size={10} className="inline"/> Transaction ID</label>
-                    <input type="text" placeholder="Enter TRX ID from SMS" value={trxId} onChange={(e) => setTrxId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white font-mono outline-none" />
+                    <input type="text" placeholder="Enter TRX ID from SMS" value={trxId} onChange={(e) => setTrxId(e.target.value)} className="w-full bg-white/5 border border-white/10 rounded-xl p-3.5 text-white font-mono outline-none focus:ring-1 focus:ring-amber-500/50" />
                   </div>
 
                   {/* SCREENSHOT UPLOAD */}
@@ -295,7 +310,7 @@ export default function BuyPage() {
                   </div>
 
                   {/* SUBMIT BUTTON */}
-                  <button onClick={handlePurchaseRequest} disabled={!trxId || !method || !screenshot || buying} className="w-full bg-emerald-500 py-4 rounded-xl font-bold text-emerald-950 flex items-center justify-center gap-2 mt-2 disabled:opacity-50">
+                  <button onClick={handlePurchaseRequest} disabled={!trxId || !method || !screenshot || buying} className="w-full bg-emerald-500 py-4 rounded-xl font-bold text-emerald-950 flex items-center justify-center gap-2 mt-2 disabled:opacity-50 active:scale-95 transition-all">
                     {buying ? <Loader2 className="animate-spin" size={20}/> : "Confirm Purchase"}
                   </button>
 

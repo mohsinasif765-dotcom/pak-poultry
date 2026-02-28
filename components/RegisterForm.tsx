@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-
 import { createClient } from '@/lib/supabase'
 import { motion, AnimatePresence } from 'framer-motion'
 
 export default function AuthForm() {
-  const supabase = createClient() 
+  // Supabase client ko stable rakhne ke liye useMemo
+  const supabase = useMemo(() => createClient(), [])
   const searchParams = useSearchParams()
   const router = useRouter()
 
@@ -20,75 +20,79 @@ export default function AuthForm() {
   const [authLoading, setAuthLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
-  const referralCode = searchParams.get('ref')
+  // Safe searchParams access
+  const referralCode = searchParams?.get('ref') || null
 
   const checkUsername = async () => {
     if (isLogin || username.length < 3) return
     setLoading(true)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('username')
-      .eq('username', username.toLowerCase())
-      .single()
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username')
+        .eq('username', username.toLowerCase())
+        .maybeSingle() // .single() ki jagah .maybeSingle() crash se bachata hai
 
-    setIsAvailable(error && error.code === 'PGRST116' ? true : false)
-    setLoading(false)
+      // Agar data mil gaya matlab username taken hai (Available: false)
+      setIsAvailable(data ? false : true)
+    } catch (err) {
+      console.error("Username check failed", err)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleAuth = async (e: React.FormEvent) => {
-  e.preventDefault()
-  setErrorMsg('')
-  setAuthLoading(true)
+    e.preventDefault()
+    setErrorMsg('')
+    setAuthLoading(true)
 
-  const dummyEmail = `${phone}@pakpoultry.com`
+    const dummyEmail = `${phone}@pakpoultry.com`
 
-  try {
-    const { data, error } = isLogin
-      ? await supabase.auth.signInWithPassword({
-          email: dummyEmail,
-          password: password,
-        })
-      : await supabase.auth.signUp({
-          email: dummyEmail,
-          password: password,
-          options: {
-            data: {
-              username: username.toLowerCase(),
-              phone_number: phone,
-              referred_by: referralCode || null,
+    try {
+      const { data, error } = isLogin
+        ? await supabase.auth.signInWithPassword({
+            email: dummyEmail,
+            password: password,
+          })
+        : await supabase.auth.signUp({
+            email: dummyEmail,
+            password: password,
+            options: {
+              data: {
+                username: username.toLowerCase(),
+                phone_number: phone,
+                referred_by: referralCode,
+              },
             },
-          },
-        })
+          })
 
-    if (error) throw error
+      if (error) throw error
 
-    const user = data.user
-    if (user) {
-      
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
+      const user = data.user
+      if (user) {
+        // Profile role check
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
 
-      const isAdmin = profile?.role === 'admin'
-      
-      router.refresh()
-      
-      setTimeout(() => {
-       
-        const target = isAdmin ? '/admin' : '/dashboard'
-        console.log("Redirecting to:", target)
-        router.push(target)
-      }, 500)
+        const isAdmin = profile?.role === 'admin'
+        
+        router.refresh()
+        
+        // Timeout thora optimize kiya hai redirect ke liye
+        setTimeout(() => {
+          const target = isAdmin ? '/admin' : '/dashboard'
+          router.push(target)
+        }, 100)
+      }
+    } catch (error: any) {
+      setErrorMsg(error.message || "Authentication failed. Please check your connection.")
+      setAuthLoading(false)
     }
-   
-
-  } catch (error: any) {
-    setErrorMsg(error.message || "Authentication failed")
-    setAuthLoading(false)
   }
-}
 
   return (
     <div className="w-full min-h-[500px] flex items-center justify-center px-4 sm:px-0">

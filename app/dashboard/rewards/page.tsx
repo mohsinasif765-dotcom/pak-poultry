@@ -1,53 +1,87 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createClient } from '@/lib/supabase'
 import { Timer, Egg, ChevronLeft, Loader2, Info } from 'lucide-react'
 import Link from 'next/link'
 
 export default function RewardZone() {
-  const supabase = createClient()
+  // Supabase client ko stable rakhne ke liye useMemo
+  const supabase = useMemo(() => createClient(), [])
+  
   const [investments, setInvestments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [now, setNow] = useState(new Date())
+  
+  // Hydration mismatch se bachne ke liye initial state null rakhi hai
+  const [now, setNow] = useState<Date | null>(null)
 
-  // Data fetch karna
   useEffect(() => {
+    // Client-side par time set karein
+    setNow(new Date())
+
     async function fetchInvestments() {
-      const { data } = await supabase.rpc('get_user_investments')
-      setInvestments(data || [])
-      setLoading(false)
+      try {
+        const { data, error } = await supabase.rpc('get_user_investments')
+        if (error) {
+          console.error("RPC Error:", error.message)
+        }
+        setInvestments(data || [])
+      } catch (err) {
+        console.error("Fetch Error:", err)
+      } finally {
+        setLoading(false)
+      }
     }
     fetchInvestments()
 
-   
     const timerId = setInterval(() => setNow(new Date()), 1000)
     return () => clearInterval(timerId)
-  }, [])
+  }, [supabase])
 
-  
+  // Timer Calculation with Safety Checks
   const getTimeRemaining = (nextRewardAt: string) => {
-    const target = new Date(nextRewardAt).getTime()
-    const diff = target - now.getTime()
+    if (!now || !nextRewardAt) return "00:00:00"
+    
+    try {
+      const target = new Date(nextRewardAt).getTime()
+      const diff = target - now.getTime()
 
-    if (diff <= 0) return "Processing..."
+      if (isNaN(target) || diff <= 0) return "Processing..."
 
-    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24)
-    const minutes = Math.floor((diff / 1000 / 60) % 60)
-    const seconds = Math.floor((diff / 1000) % 60)
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24)
+      const minutes = Math.floor((diff / 1000 / 60) % 60)
+      const seconds = Math.floor((diff / 1000) % 60)
 
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+    } catch (e) {
+      return "00:00:00"
+    }
   }
 
-  if (loading) return <div className="h-screen flex items-center justify-center text-emerald-400"><Loader2 className="animate-spin" /></div>
+  // Progress bar calculation (Visual Only)
+  const getProgress = (nextRewardAt: string) => {
+    if (!now || !nextRewardAt) return 0
+    const target = new Date(nextRewardAt).getTime()
+    const start = target - (24 * 60 * 60 * 1000) // 24 hours ago
+    const total = target - start
+    const current = now.getTime() - start
+    const pct = (current / total) * 100
+    return Math.min(Math.max(pct, 0), 100)
+  }
+
+  if (loading) return (
+    <div className="h-screen flex items-center justify-center text-emerald-400 bg-[#022c22]">
+      <Loader2 className="animate-spin w-10 h-10" />
+    </div>
+  )
 
   return (
     <div className="min-h-screen bg-[#022c22] text-white pb-32 pt-6 px-4">
       
       {/* HEADER */}
       <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="p-2 bg-white/5 rounded-full border border-white/10">
+        <Link href="/dashboard" className="p-2 bg-white/5 rounded-full border border-white/10 active:scale-90 transition-transform">
           <ChevronLeft size={20} />
         </Link>
         <div>
@@ -66,10 +100,10 @@ export default function RewardZone() {
 
       {/* CARDS LIST */}
       <div className="space-y-4">
-        {investments.length > 0 ? (
+        {investments && investments.length > 0 ? (
           investments.map((inv, idx) => (
             <motion.div
-              key={inv.id}
+              key={inv?.id || idx}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.1 }}
@@ -84,8 +118,10 @@ export default function RewardZone() {
                     🐔
                   </div>
                   <div>
-                    <h3 className="font-bold text-white leading-tight">{inv.package_name}</h3>
-                    <p className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">Production: {inv.quantity} Eggs / Day</p>
+                    <h3 className="font-bold text-white leading-tight">{inv?.package_name || 'Golden Hen'}</h3>
+                    <p className="text-[10px] text-white/40 uppercase font-bold tracking-tighter">
+                      Production: {inv?.quantity || 0} Eggs / Day
+                    </p>
                   </div>
                 </div>
                 <div className="text-right">
@@ -99,18 +135,18 @@ export default function RewardZone() {
                 <div className="flex justify-between items-end">
                   <div className="flex items-center gap-2 text-amber-400">
                     <Timer size={14} />
-                    <span className="text-lg font-mono font-black">{getTimeRemaining(inv.next_reward_at)}</span>
+                    <span className="text-lg font-mono font-black">
+                      {getTimeRemaining(inv?.next_reward_at)}
+                    </span>
                   </div>
                   <p className="text-[10px] text-white/40 font-bold uppercase">Next Drop</p>
                 </div>
 
-                {/* Visual Progress Bar */}
+                {/* Visual Progress Bar - Dynamic width based on time */}
                 <div className="h-1.5 w-full bg-black/40 rounded-full overflow-hidden border border-white/5">
-                  <motion.div 
-                    className="h-full bg-gradient-to-r from-emerald-500 to-amber-400"
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: 86400, ease: "linear" }} // 24 hours in seconds
+                  <div 
+                    className="h-full bg-gradient-to-r from-emerald-500 to-amber-400 transition-all duration-1000 ease-linear"
+                    style={{ width: `${getProgress(inv?.next_reward_at)}%` }}
                   />
                 </div>
               </div>
@@ -119,16 +155,20 @@ export default function RewardZone() {
               <div className="mt-5 pt-4 border-t border-white/5 flex justify-between items-center">
                  <div className="flex items-center gap-1.5">
                     <Egg size={12} className="text-amber-400" />
-                    <span className="text-xs font-bold text-white/60">Batch ID: #{inv.id.toString().slice(-4)}</span>
+                    <span className="text-xs font-bold text-white/60">
+                      Batch ID: #{inv?.id ? inv.id.toString().slice(-4) : '0000'}
+                    </span>
                  </div>
-                 <p className="text-[10px] text-white/40 font-mono italic">Expires on: {new Date(inv.ends_at).toLocaleDateString()}</p>
+                 <p className="text-[10px] text-white/40 font-mono italic">
+                   Expires: {inv?.ends_at ? new Date(inv.ends_at).toLocaleDateString() : '---'}
+                 </p>
               </div>
             </motion.div>
           ))
         ) : (
           <div className="text-center py-20 opacity-20">
             <Egg size={40} className="mx-auto mb-4" />
-            <p className="text-sm font-bold uppercase">No Active Hens Found</p>
+            <p className="text-sm font-bold uppercase tracking-widest">No Active Hens Found</p>
           </div>
         )}
       </div>
